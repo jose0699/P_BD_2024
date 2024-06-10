@@ -27,11 +27,12 @@ CREATE TABLE ESTADO_SALUD(
 
 CREATE TABLE DEPARTAMENTO (
 	uid_departamento numeric(2) NOT NULL,
-	nombre varchar(30) NOT NULL,
+	nombre varchar(45) NOT NULL,
 	nivel numeric(1) NOT NULL,
 	tipo varchar(2) NOT NULL,
-	descripcion varchar(60),
+	descripcion varchar(65),
 	uid_dep_padre numeric(2),
+	CONSTRAINT cK_nivel_departamento CHECK (nivel BETWEEN 1 AND 4),
 	CONSTRAINT tipo_departamento CHECK (tipo IN ('GE', 'SE', 'DE', 'AL')),
 	CONSTRAINT fk_departamento FOREIGN KEY (uid_dep_padre) REFERENCES DEPARTAMENTO (uid_departamento), 
 	CONSTRAINT pk_departamento PRIMARY KEY (uid_departamento)
@@ -55,7 +56,7 @@ CREATE TABLE EMPLEADO(
 	segundo_apellido varchar(30),
 	supervisor numeric(4),
 	CONSTRAINT check_genero CHECK (genero in ('M', 'F')),
-	CONSTRAINT cargo_empleado CHECK (cargo in ('se', 'ge', 'me', 'in', 'og', 'el')),
+	CONSTRAINT cargo_empleado CHECK (cargo in ('se', 'ge', 'me', 'in', 'og', 'el','ho')),
 	CONSTRAINT check_tipo_sangre CHECK(tipo_sangre in ('A+', 'O+', 'B+', 'AB+', 'A-','O-', 'B-', 'AB-')),
 	CONSTRAINT check_mension CHECK (titulo in ('ba','qui', 'mec', 'pro', 'ind', 'geo')),
 	CONSTRAINT fk_departamento FOREIGN KEY (trabaja) REFERENCES DEPARTAMENTO (uid_departamento),
@@ -77,15 +78,16 @@ CREATE TABLE RECONOCIMIENTO(
 	num_expediente numeric(4) not null,
 	uid_reconocimiento numeric(5) not null,
 	fecha date not null,
-	descripcion varchar(64) not null,
+	descripcion varchar(128) not null,
 	CONSTRAINT fk_empleado_reconocimiento FOREIGN KEY (num_expediente) REFERENCES EMPLEADO(num_expediente),
 	CONSTRAINT pk_reconocimiento PRIMARY KEY(num_expediente, uid_reconocimiento)
 );
 
-CREATE TABLE HORARIO(
+CREATE TABLE HIST_TURNO(
 	num_expediente numeric(4) not null,
 	mesano date not null,
 	turno numeric(1) not null,
+	CONSTRAINT ck_turno_horario CHECK (turno BETWEEN 1 AND 3),
 	CONSTRAINT fk_empleado_horario FOREIGN KEY (num_expediente) REFERENCES EMPLEADO(num_expediente),
 	CONSTRAINT pk_horario PRIMARY KEY (num_expediente, mesano)
 );
@@ -135,7 +137,7 @@ CREATE TABLE COLECCION(
 	fecha_lanzamiento date not null, 
 	linea varchar(1) not null,
 	categoria varchar(3) not null,
-	descripcion_mot_color varchar (256) not null,
+	descripcion_mot_color varchar (512) not null,
 	CONSTRAINT check_linea_coleccion CHECK(linea in ('I', 'F')),
 	CONSTRAINT check_categoria_coleccion CHECK(categoria in ('cla', 'cou', 'mod')),
 	CONSTRAINT pk_coleccion PRIMARY KEY(uid_coleccion)
@@ -145,7 +147,7 @@ CREATE TABLE MOLDE(
 	uid_molde numeric(2) not null,
 	tipo varchar (2) not null,
 	tamaño varchar(10) not null,
-	volumen numeric(3,2) not null,
+	volumen numeric(3,2),
 	cant_persona numeric(1),
 	tipo_plato varchar(2),
 	tipo_taza varchar(2),
@@ -178,8 +180,8 @@ CREATE TABLE PIEZA (
 );
 
 CREATE TABLE FAMILIAR_HISTORICO_PRECIO(
-	uid_pieza numeric(3) not null,
 	uid_coleccion numeric(2) not null,
+	uid_pieza numeric(3) not null,
 	fecha_inicio timestamp not null,
 	precio numeric(8,2) not null,
 	fecha_fin timestamp,
@@ -193,6 +195,8 @@ CREATE TABLE DETALLE_PIEZA_VAJILLA (
 	uid_pieza numeric(3) not null,
 	uid_coleccion numeric(2) not null,
 	cantidad numeric(2) not null,
+    CONSTRAINT check_exclusive_arcs CHECK ((uid_juego IS NOT NULL AND uid_pieza IS NULL AND uid_coleccion IS NULL)
+                                        OR (uid_juego IS NULL AND uid_pieza IS NOT NULL AND uid_coleccion IS NOT NULL)),
 	CONSTRAINT fk_juego_detalle FOREIGN KEY (uid_juego) REFERENCES VAJILLA (uid_juego),
 	CONSTRAINT fk_pieza_detalle FOREIGN KEY (uid_coleccion, uid_pieza) REFERENCES PIEZA (uid_coleccion, uid_pieza),
 	CONSTRAINT pk_detalle PRIMARY KEY (uid_coleccion, uid_juego, uid_pieza )
